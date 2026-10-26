@@ -1,0 +1,848 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#0B0909">
+    <meta name="description" content="Discover your face shape and explore hairstyle and glasses recommendations with Face Form.">
+    <title>Face Form | Face Shape Analyzer</title>
+
+    <style>
+        :root {
+          --black: #0B0909;
+          --forest: #2E4540;
+          --sage: #408175;
+          --lavender: #B5B9F0;
+          --white: #F7F7F4;
+          --muted: #A8ACA8;
+          --surface: #121615;
+          --border: rgba(181,185,240,.2);
+        }
+        * { box-sizing: border-box; }
+        html { scroll-behavior: smooth; }
+        body {
+          margin: 0;
+          background: var(--black);
+          color: var(--white);
+          font-family: Inter, system-ui, Arial, sans-serif;
+          line-height: 1.6;
+        }
+        button, input, select { font: inherit; }
+        button, select { cursor: pointer; }
+        a { color: inherit; }
+        .container { width: min(1100px, calc(100% - 32px)); margin: auto; }
+        header {
+          position: sticky; top: 0; z-index: 10;
+          background: rgba(11,9,9,.95);
+          border-bottom: 1px solid var(--border);
+        }
+        nav {
+          min-height: 70px; display: flex; align-items: center;
+          justify-content: space-between; gap: 20px;
+        }
+        .brand { font-size: 21px; font-weight: 800; text-decoration: none; }
+        .brand span { color: var(--lavender); }
+        nav .links { display: flex; gap: 20px; flex-wrap: wrap; }
+        nav .links a { color: var(--muted); text-decoration: none; font-size: 13px; }
+        nav .links a:hover { color: var(--lavender); }
+
+        .hero { text-align: center; padding: 70px 0 35px; }
+        .eyebrow { color: var(--lavender); text-transform: uppercase; letter-spacing: 2px; font-size: 11px; }
+        h1 { font-size: clamp(36px, 6vw, 62px); line-height: 1.1; letter-spacing: -2px; margin: 16px 0; }
+        h1 span { color: var(--lavender); }
+        .hero p { color: var(--muted); max-width: 620px; margin: auto; }
+        .actions { display: flex; gap: 12px; justify-content: center; flex-wrap: wrap; margin-top: 24px; }
+
+        .btn {
+          display: inline-flex; align-items: center; justify-content: center;
+          border: 1px solid transparent; border-radius: 10px;
+          padding: 12px 17px; font-weight: 700; font-size: 13px;
+          text-decoration: none; transition: .2s;
+        }
+        .btn:hover { transform: translateY(-2px); }
+        .primary { background: var(--lavender); color: var(--black); }
+        .secondary { background: transparent; color: var(--white); border-color: var(--border); }
+        .green { background: var(--sage); color: white; }
+        .btn:disabled { opacity: .5; cursor: not-allowed; transform: none; }
+
+        .workspace {
+          display: grid; grid-template-columns: 1fr 1fr;
+          gap: 20px; padding: 25px 0 55px;
+        }
+        .panel {
+          background: var(--surface); border: 1px solid var(--border);
+          border-radius: 18px; padding: 24px; min-width: 0;
+        }
+        .panel h2 { margin-top: 0; font-size: 19px; }
+        .subtext { color: var(--muted); font-size: 13px; }
+
+        .dropzone {
+          min-height: 250px; padding: 20px; display: flex;
+          align-items: center; justify-content: center;
+          border: 1px dashed var(--lavender); border-radius: 14px;
+          background: #19201E; text-align: center;
+        }
+        .dropzone.dragging { background: var(--forest); }
+        #fileInput { display: none; }
+        #preview { display: none; max-width: 100%; max-height: 350px; object-fit: contain; }
+        .guidelines { color: var(--muted); font-size: 12px; margin: 14px 0; }
+        .status { display: none; margin-top: 14px; padding: 12px; border-radius: 9px; font-size: 13px; }
+        .status.show { display: block; }
+        .status.error { color: #F2A6A6; background: #2b1717; }
+        .status.success { color: #B9DED3; background: #14231f; }
+        .status.info { color: var(--lavender); background: #1b1a2a; }
+        .full { width: 100%; margin-top: 12px; }
+
+        .result-placeholder { padding: 45px 10px; text-align: center; }
+        .face-icon { font-size: 58px; color: var(--lavender); }
+        .result-content { display: none; }
+        .result-label { color: var(--muted); font-size: 11px; text-transform: uppercase; letter-spacing: 2px; }
+        .result-shape { color: var(--lavender); font-size: 42px; font-weight: 800; margin: 4px 0; }
+        .progress { height: 6px; border-radius: 20px; background: #303632; overflow: hidden; margin: 10px 0 18px; }
+        .progress div { height: 100%; width: 0; background: var(--sage); transition: width .3s; }
+        .score { margin: 12px 0; }
+        .score-head { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 5px; }
+        .score .progress { margin: 0; height: 4px; }
+        .small-note { font-size: 11px; color: var(--muted); }
+
+        section.content-section { padding: 45px 0 55px; border-top: 1px solid rgba(255,255,255,.08); }
+        .section-heading { margin-bottom: 22px; }
+        .section-heading h2 { margin: 0 0 5px; font-size: 29px; }
+        .section-heading p { margin: 0; color: var(--muted); font-size: 13px; }
+
+        .guide-grid { display: grid; grid-template-columns: repeat(5,1fr); gap: 12px; }
+        .guide-card {
+          text-align: left; color: var(--white); background: var(--surface);
+          border: 1px solid var(--border); border-radius: 13px; padding: 15px;
+        }
+        .guide-card:hover, .guide-card.selected { border-color: var(--lavender); }
+        .guide-card .shape-icon { display: grid; place-items: center; height: 80px; font-size: 35px; color: var(--lavender); }
+        .guide-card strong { display: block; margin: 8px 0 4px; }
+        .guide-card p { font-size: 11px; color: var(--muted); margin: 0; }
+
+        .guide-detail {
+          display: none; margin-top: 22px; padding: 24px;
+          background: var(--surface); border: 1px solid var(--border); border-radius: 17px;
+        }
+        .guide-detail.visible { display: block; }
+        .guide-detail h3 { color: var(--lavender); font-size: 28px; margin: 0 0 8px; }
+        .guide-detail p { color: var(--muted); font-size: 13px; }
+        .guide-columns { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; }
+        .guide-block { border: 1px solid var(--border); border-radius: 12px; padding: 17px; }
+        .guide-block h4 { margin: 0 0 10px; }
+        .guide-block ul { padding-left: 20px; color: #D5D8D4; font-size: 12px; }
+        .guide-block li { margin-bottom: 8px; }
+
+        .filters { display: grid; grid-template-columns: repeat(3,1fr); gap: 12px; margin: 18px 0; }
+        .filters label { display: block; color: var(--muted); font-size: 12px; margin-bottom: 5px; }
+        .filters select {
+          width: 100%; padding: 10px; border: 1px solid var(--border);
+          border-radius: 8px; background: var(--black); color: var(--white);
+        }
+        .cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(190px,1fr)); gap: 12px; }
+        .recommendation { padding: 15px; background: #19201E; border: 1px solid var(--border); border-radius: 11px; }
+        .recommendation h5 { color: var(--lavender); margin: 0 0 8px; font-size: 14px; }
+        .recommendation p { font-size: 12px; margin: 0 0 8px; }
+        .tag { color: var(--muted); font-size: 10px; }
+        .disclaimer { border-left: 2px solid var(--sage); padding: 12px; background: rgba(64,129,117,.1); }
+
+        .how-grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 14px; }
+        .how-card { background: var(--surface); border: 1px solid var(--border); border-radius: 13px; padding: 18px; }
+        .how-card h3 { font-size: 15px; }
+        .how-card p { font-size: 12px; color: var(--muted); }
+        footer { border-top: 1px solid var(--border); padding: 24px 0; color: var(--muted); font-size: 11px; }
+
+        @media (max-width: 850px) {
+          .workspace { grid-template-columns: 1fr; }
+          .guide-grid { grid-template-columns: repeat(3,1fr); }
+        }
+        @media (max-width: 600px) {
+          nav { align-items: flex-start; padding: 15px 0; flex-direction: column; }
+          nav .links { gap: 13px; }
+          .hero { padding-top: 45px; }
+          .panel { padding: 17px; }
+          .guide-grid { grid-template-columns: repeat(2,1fr); }
+          .guide-columns, .filters, .how-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+
+<body>
+<header>
+    <nav class="container">
+        <a class="brand" href="#top">face <span>form.</span></a>
+        <div class="links">
+            <a href="#analyzer">Analyzer</a>
+            <a href="#guides">Style guides</a>
+            <a href="#how">How it works</a>
+        </div>
+    </nav>
+</header>
+
+<main id="top">
+    <section class="hero container">
+        <div class="eyebrow">AI face analysis · Personal style</div>
+        <h1>Discover your <span>face shape.</span></h1>
+        <p>Upload a photo to explore your model's prediction, then discover hairstyle and glasses ideas based on your preferences.</p>
+        <div class="actions">
+            <a class="btn primary" href="#analyzer">Analyze my face ↓</a>
+            <a class="btn secondary" href="#guides">Explore style guides</a>
+        </div>
+    </section>
+
+    <section class="workspace container" id="analyzer">
+        <div class="panel">
+            <h2>Your photo</h2>
+            <p class="subtext">Choose a clear, front-facing image.</p>
+
+            <input id="fileInput" type="file" accept="image/jpeg,image/png,image/webp">
+            <div id="dropzone" class="dropzone" tabindex="0">
+                <div id="uploadPrompt">
+                    <div class="face-icon">＋</div>
+                    <p>Drop an image here or select one from your device.</p>
+                    <button id="browseButton" class="btn green" type="button">Browse image</button>
+                </div>
+                <img id="preview" alt="Selected photo preview">
+            </div>
+            <p class="guidelines">JPG, PNG or WebP · Maximum 10 MB · Use a clear, well-lit photo.</p>
+            <button id="removeButton" class="btn secondary full" type="button" hidden>Remove photo</button>
+            <button id="analyzeButton" class="btn primary full" type="button" disabled>Analyze my face shape</button>
+            <p class="small-note">Your image is sent to your backend for analysis. Avoid uploading photos without permission.</p>
+            <div id="uploadStatus" class="status" role="status" aria-live="polite"></div>
+        </div>
+
+        <div class="panel">
+            <h2>Your analysis</h2>
+            <p class="subtext">Your model prediction and score breakdown.</p>
+
+            <div id="resultPlaceholder" class="result-placeholder">
+                <div class="face-icon">◯</div>
+                <h3>Your result will appear here</h3>
+                <p class="subtext">Upload a photo and run the analyzer to see the prediction.</p>
+            </div>
+
+            <div id="resultContent" class="result-content">
+                <div class="result-label">Predicted face shape</div>
+                <div id="resultShape" class="result-shape">—</div>
+                <p id="resultDescription" class="subtext"></p>
+
+                <div class="small-note">Model score</div>
+                <div id="confidenceValue">—</div>
+                <div class="progress"><div id="confidenceBar"></div></div>
+
+                <h3>Prediction score breakdown</h3>
+                <div id="scoresList"></div>
+                <p id="modelVersion" class="small-note"></p>
+                <p class="small-note">Scores are model outputs, not a guarantee of real-world accuracy.</p>
+
+                <button id="openMatchingGuide" class="btn green full" type="button">Explore matching guide</button>
+            </div>
+        </div>
+    </section>
+
+    <section class="content-section" id="guides">
+        <div class="container">
+            <div class="section-heading">
+                <h2>Explore face-shape guides</h2>
+                <p>Select a shape to load its styling guide from your Spring Boot API.</p>
+            </div>
+            <div id="guideGrid" class="guide-grid"></div>
+
+            <div id="guideDetail" class="guide-detail">
+                <h3 id="guideTitle">Face-shape guide</h3>
+                <p id="guideSummary"></p>
+
+                <div class="guide-columns">
+                    <div class="guide-block">
+                        <h4>Visual clues</h4>
+                        <ul id="visualClues"></ul>
+                    </div>
+                    <div class="guide-block">
+                        <h4>Styling tips</h4>
+                        <ul id="stylingTips"></ul>
+                    </div>
+                </div>
+
+                <h3 style="font-size:20px;margin-top:25px">Find hairstyle ideas</h3>
+                <div class="filters">
+                    <div>
+                        <label for="hairLength">Hair length</label>
+                        <select id="hairLength">
+                            <option value="any">Any length</option>
+                            <option value="short">Short</option>
+                            <option value="medium">Medium</option>
+                            <option value="long">Long</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="hairTexture">Hair texture</label>
+                        <select id="hairTexture">
+                            <option value="any">Any texture</option>
+                            <option value="straight">Straight</option>
+                            <option value="wavy">Wavy</option>
+                            <option value="curly">Curly</option>
+                            <option value="coily">Coily</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label for="maintenance">Maintenance</label>
+                        <select id="maintenance">
+                            <option value="any">Any level</option>
+                            <option value="low">Low</option>
+                            <option value="medium">Medium</option>
+                            <option value="high">High</option>
+                        </select>
+                    </div>
+                </div>
+                <div id="hairResults" class="cards"></div>
+                <p id="hairMessage" class="small-note"></p>
+
+                <h3 style="font-size:20px;margin-top:25px">Glasses and frame ideas</h3>
+                <div id="frameResults" class="cards"></div>
+
+                <h3 style="font-size:20px;margin-top:25px">Why predictions can be uncertain</h3>
+                <ul id="uncertaintyFactors"></ul>
+                <p id="guideDisclaimer" class="disclaimer"></p>
+                <div id="guideStatus" class="status" role="status" aria-live="polite"></div>
+            </div>
+        </div>
+    </section>
+
+    <section class="content-section" id="how">
+        <div class="container">
+            <div class="section-heading">
+                <h2>How it works</h2>
+                <p>A simple process from upload to personal styling ideas.</p>
+            </div>
+            <div class="how-grid">
+                <article class="how-card">
+                    <div class="eyebrow">01 · Upload</div>
+                    <h3>Choose a clear photo</h3>
+                    <p>Use a front-facing image with the face visible and good lighting.</p>
+                </article>
+                <article class="how-card">
+                    <div class="eyebrow">02 · Analyze</div>
+                    <h3>Review your model result</h3>
+                    <p>See the predicted category and the model's scores for each supported shape.</p>
+                </article>
+                <article class="how-card">
+                    <div class="eyebrow">03 · Explore</div>
+                    <h3>Find your preferences</h3>
+                    <p>Open the matching guide and filter hairstyle ideas based on your routine and hair texture.</p>
+                </article>
+            </div>
+        </div>
+    </section>
+</main>
+
+<footer>
+    <div class="container">
+        Face Form · Face-shape results are estimates, not definitive measurements.
+        <p>Review your site's privacy policy before accepting real user photos.</p>
+    </div>
+</footer>
+
+<script>
+    "use strict";
+
+    /*
+     * These URLs match your existing Spring Boot controllers.
+     * Keep the frontend served by Spring Boot at http://localhost:8080/.
+     */
+    const PREDICTION_API = "/api/v1/face-shape/predict";
+    const GUIDE_API = "/api/v1/style-guides";
+
+    const MAX_FILE_SIZE = 10 * 1024 * 1024;
+    const ALLOWED_TYPES = new Set(["image/jpeg", "image/png", "image/webp"]);
+    const SHAPES = ["heart", "oval", "oblong", "square", "round"];
+
+    const SHAPE_INFO = {
+      heart: {
+        title: "Heart",
+        blurb: "A heart-shaped outline may have a wider forehead and a narrower chin.",
+        clues: ["The forehead may appear wider than the jaw.", "The chin may look narrower or tapered."]
+      },
+      oval: {
+        title: "Oval",
+        blurb: "An oval outline may look somewhat longer than it is wide, with a gently rounded jaw.",
+        clues: ["The face may appear longer than it is wide.", "The jawline may appear softly rounded."]
+      },
+      oblong: {
+        title: "Oblong",
+        blurb: "An oblong outline may appear noticeably longer than it is wide.",
+        clues: ["The face may look longer than its width.", "Perspective can exaggerate apparent face length."]
+      },
+      square: {
+        title: "Square",
+        blurb: "A square outline may have a broad jaw and similar-looking forehead and jaw widths.",
+        clues: ["The jaw may look broad or angular.", "The forehead and jaw may appear similar in width."]
+      },
+      round: {
+        title: "Round",
+        blurb: "A round outline may have fuller-looking cheeks and a gently curved jaw.",
+        clues: ["The cheeks may appear relatively full.", "The jaw may have a softly curved outline."]
+      }
+    };
+
+    const $ = id => document.getElementById(id);
+
+    const fileInput = $("fileInput");
+    const dropzone = $("dropzone");
+    const preview = $("preview");
+    const uploadPrompt = $("uploadPrompt");
+    const analyzeButton = $("analyzeButton");
+    const removeButton = $("removeButton");
+    const uploadStatus = $("uploadStatus");
+
+    let selectedFile = null;
+    let previewUrl = null;
+    let busy = false;
+    let predictionShape = null;
+    let currentGuide = null;
+
+    function showStatus(element, message, type = "info") {
+      element.textContent = message;
+      element.className = `status show ${type}`;
+    }
+    function clearStatus(element) {
+      element.textContent = "";
+      element.className = "status";
+    }
+    function normalizeShape(value) {
+      if (typeof value !== "string") return null;
+      const shape = value.trim().toLowerCase();
+      return SHAPES.includes(shape) ? shape : null;
+    }
+    function pretty(value) {
+      return String(value ?? "")
+        .replace(/[_-]+/g, " ")
+        .replace(/\b\w/g, c => c.toUpperCase());
+    }
+    function asArray(value) {
+      return Array.isArray(value) ? value : [];
+    }
+    function bytesLabel(bytes) {
+      return bytes < 1024 * 1024
+        ? `${Math.round(bytes / 1024)} KB`
+        : `${(bytes / 1024 / 1024).toFixed(2)} MB`;
+    }
+
+    $("browseButton").addEventListener("click", () => fileInput.click());
+
+    dropzone.addEventListener("click", event => {
+      if (!event.target.closest("button")) fileInput.click();
+    });
+    dropzone.addEventListener("keydown", event => {
+      if (event.key === "Enter" || event.key === " ") {
+        event.preventDefault();
+        fileInput.click();
+      }
+    });
+    fileInput.addEventListener("change", () => {
+      const file = fileInput.files?.[0];
+      if (file) chooseFile(file);
+      fileInput.value = "";
+    });
+    dropzone.addEventListener("dragover", event => {
+      event.preventDefault();
+      dropzone.classList.add("dragging");
+    });
+    dropzone.addEventListener("dragleave", () => dropzone.classList.remove("dragging"));
+    dropzone.addEventListener("drop", event => {
+      event.preventDefault();
+      dropzone.classList.remove("dragging");
+      const file = event.dataTransfer?.files?.[0];
+      if (file) chooseFile(file);
+    });
+
+    function chooseFile(file) {
+      clearStatus(uploadStatus);
+
+      if (busy) return;
+      if (!ALLOWED_TYPES.has(file.type)) {
+        showStatus(uploadStatus, "Choose a JPEG, PNG or WebP image.", "error");
+        return;
+      }
+      if (!file.size || file.size > MAX_FILE_SIZE) {
+        showStatus(uploadStatus, "Choose a non-empty image smaller than 10 MB.", "error");
+        return;
+      }
+
+      releasePreview();
+      selectedFile = file;
+      previewUrl = URL.createObjectURL(file);
+      preview.src = previewUrl;
+      preview.style.display = "block";
+      uploadPrompt.style.display = "none";
+      removeButton.hidden = false;
+      analyzeButton.disabled = false;
+      resetResults();
+      $("uploadFileName")?.remove();
+    }
+
+    function releasePreview() {
+      if (previewUrl) URL.revokeObjectURL(previewUrl);
+      previewUrl = null;
+    }
+
+    removeButton.addEventListener("click", () => {
+      if (busy) return;
+      selectedFile = null;
+      fileInput.value = "";
+      releasePreview();
+      preview.removeAttribute("src");
+      preview.style.display = "none";
+      uploadPrompt.style.display = "block";
+      removeButton.hidden = true;
+      analyzeButton.disabled = true;
+      clearStatus(uploadStatus);
+      resetResults();
+    });
+
+    function resetResults() {
+      $("resultPlaceholder").style.display = "block";
+      $("resultContent").style.display = "none";
+      $("resultShape").textContent = "—";
+      $("confidenceValue").textContent = "—";
+      $("confidenceBar").style.width = "0";
+      $("scoresList").replaceChildren();
+      $("modelVersion").textContent = "";
+      predictionShape = null;
+    }
+
+    function setBusy(value) {
+      busy = value;
+      analyzeButton.disabled = value || !selectedFile;
+      $("browseButton").disabled = value;
+      removeButton.disabled = value;
+      analyzeButton.textContent = value ? "Analyzing photo…" : "Analyze my face shape";
+    }
+
+    analyzeButton.addEventListener("click", analyzeFace);
+
+    async function analyzeFace() {
+      if (!selectedFile || busy) return;
+      clearStatus(uploadStatus);
+      resetResults();
+      setBusy(true);
+
+      const formData = new FormData();
+
+      // Matches @RequestPart("file") in FaceShapeController.
+      formData.append("file", selectedFile);
+
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 70000);
+
+      try {
+        const response = await fetch(PREDICTION_API, {
+          method: "POST",
+          body: formData,
+          headers: { Accept: "application/json" },
+          signal: controller.signal
+        });
+
+        const raw = await response.text();
+        let data = {};
+        if (raw) {
+          try { data = JSON.parse(raw); }
+          catch { throw new Error("The server returned an invalid response."); }
+        }
+
+        if (!response.ok) {
+          throw new Error(data.detail || data.message || `Request failed (${response.status}).`);
+        }
+
+        renderPrediction(data);
+        showStatus(uploadStatus, "Analysis complete. Explore your matching guide below.", "success");
+      } catch (error) {
+        const message = error.name === "AbortError"
+          ? "The request timed out. Check that the Python model is ready."
+          : error instanceof TypeError
+            ? "Cannot reach Spring Boot. Open this page through http://localhost:8080/."
+            : error.message || "Analysis failed. Please try again.";
+        showStatus(uploadStatus, message, "error");
+      } finally {
+        clearTimeout(timeout);
+        setBusy(false);
+      }
+    }
+
+    function renderPrediction(data) {
+      const shape = normalizeShape(data.face_shape ?? data.faceShape);
+      if (!shape) throw new Error("The API returned an unsupported face-shape label.");
+
+      const confidence = data.confidence;
+      $("resultPlaceholder").style.display = "none";
+      $("resultContent").style.display = "block";
+      $("resultShape").textContent = SHAPE_INFO[shape].title;
+      $("resultDescription").textContent = SHAPE_INFO[shape].blurb;
+
+      if (typeof confidence === "number" && confidence >= 0 && confidence <= 1) {
+        $("confidenceValue").textContent = `${(confidence * 100).toFixed(1)}%`;
+        $("confidenceBar").style.width = `${confidence * 100}%`;
+      } else {
+        $("confidenceValue").textContent = "Not provided";
+      }
+
+      renderScores(data.scores);
+      $("modelVersion").textContent = data.model_version
+        ? `Model version: ${data.model_version}` : "";
+      predictionShape = shape;
+    }
+
+    function renderScores(scores) {
+      const list = $("scoresList");
+      list.replaceChildren();
+
+      const items = asArray(scores)
+        .filter(item => item &&
+          typeof item.label === "string" &&
+          typeof item.probability === "number" &&
+          Number.isFinite(item.probability))
+        .sort((a, b) => b.probability - a.probability);
+
+      for (const item of items) {
+        const row = document.createElement("div");
+        row.className = "score";
+
+        const heading = document.createElement("div");
+        heading.className = "score-head";
+
+        const label = document.createElement("span");
+        label.textContent = pretty(item.label);
+
+        const value = document.createElement("span");
+        value.textContent = `${(item.probability * 100).toFixed(1)}%`;
+        heading.append(label, value);
+
+        const track = document.createElement("div");
+        track.className = "progress";
+        const bar = document.createElement("div");
+        bar.style.width = `${Math.max(0, Math.min(1, item.probability)) * 100}%`;
+        track.appendChild(bar);
+        row.append(heading, track);
+        list.appendChild(row);
+      }
+    }
+
+    $("openMatchingGuide").addEventListener("click", () => {
+      if (predictionShape) loadGuide(predictionShape, true);
+    });
+
+    function buildGuideCards() {
+      const grid = $("guideGrid");
+      grid.replaceChildren();
+
+      for (const shape of SHAPES) {
+        const info = SHAPE_INFO[shape];
+        const button = document.createElement("button");
+        button.type = "button";
+        button.className = "guide-card";
+        button.dataset.shape = shape;
+
+        const icon = document.createElement("div");
+        icon.className = "shape-icon";
+        icon.textContent = "◯";
+
+        const title = document.createElement("strong");
+        title.textContent = `${info.title} face shape`;
+
+        const description = document.createElement("p");
+        description.textContent = info.blurb;
+
+        button.append(icon, title, description);
+        button.addEventListener("click", () => loadGuide(shape, true));
+        grid.appendChild(button);
+      }
+    }
+
+    async function loadGuide(shape, scroll) {
+      const key = normalizeShape(shape);
+      if (!key) return;
+
+      clearStatus($("guideStatus"));
+      $("guideDetail").classList.add("visible");
+      $("guideTitle").textContent = `${SHAPE_INFO[key].title} face shape`;
+      $("guideSummary").textContent = "Loading guide…";
+      showStatus($("guideStatus"), "Loading recommendations from Spring Boot…");
+
+      document.querySelectorAll(".guide-card").forEach(card => {
+        card.classList.toggle("selected", card.dataset.shape === key);
+      });
+
+      if (scroll) $("guideDetail").scrollIntoView({ behavior: "smooth", block: "start" });
+
+      try {
+        // Matches @GetMapping("/{shape}") in StyleGuideController.
+        const response = await fetch(`${GUIDE_API}/${encodeURIComponent(key)}`, {
+          headers: { Accept: "application/json" }
+        });
+
+        const raw = await response.text();
+        let guide = {};
+        if (raw) {
+          try { guide = JSON.parse(raw); }
+          catch { throw new Error("Guide API did not return JSON."); }
+        }
+        if (!response.ok) {
+          throw new Error(guide.message || guide.detail || `Guide request failed (${response.status}).`);
+        }
+
+        currentGuide = guide;
+        renderGuide(key, guide);
+        clearStatus($("guideStatus"));
+      } catch (error) {
+        currentGuide = null;
+        $("guideSummary").textContent = SHAPE_INFO[key].blurb;
+        renderFallbackGuide(key);
+        showStatus($("guideStatus"),
+          `Could not load the API guide. Check GET ${GUIDE_API}/${key}. ${error.message}`,
+          "error");
+      }
+    }
+
+    function fillList(id, values, fallback) {
+      const list = $(id);
+      list.replaceChildren();
+      for (const value of (asArray(values).filter(v => typeof v === "string" && v.trim()).length
+        ? values.filter(v => typeof v === "string" && v.trim())
+        : fallback)) {
+        const li = document.createElement("li");
+        li.textContent = value;
+        list.appendChild(li);
+      }
+    }
+
+    function renderFallbackGuide(shape) {
+      fillList("visualClues", SHAPE_INFO[shape].clues, []);
+      fillList("stylingTips", [
+        "Try a few styles and choose what feels comfortable.",
+        "Consider hair texture, personal preference and daily routine."
+      ], []);
+      fillList("uncertaintyFactors", [
+        "Camera angle and perspective",
+        "Lighting and image framing",
+        "Hair covering parts of the face",
+        "Image quality and head position"
+      ], []);
+      $("hairResults").replaceChildren();
+      $("frameResults").replaceChildren();
+      $("hairMessage").textContent = "";
+    }
+
+    function renderGuide(shape, guide) {
+      $("guideTitle").textContent =
+        `${pretty(guide.faceShape ?? guide.face_shape ?? SHAPE_INFO[shape].title)} face shape`;
+      $("guideSummary").textContent = guide.summary || SHAPE_INFO[shape].blurb;
+
+      fillList("visualClues", guide.visualClues ?? guide.visual_clues, SHAPE_INFO[shape].clues);
+      fillList("stylingTips", guide.stylingTips ?? guide.styling_tips, [
+        "Try several styles before deciding.",
+        "Consider hair texture, comfort and daily routine."
+      ]);
+      fillList("uncertaintyFactors", guide.uncertaintyFactors ?? guide.uncertainty_factors, [
+        "Camera angle and perspective",
+        "Lighting and image framing",
+        "Hair covering parts of the face",
+        "Image quality and head position"
+      ]);
+
+      $("guideDisclaimer").textContent = guide.disclaimer ||
+        "These are optional styling ideas, not fixed rules. Personal preference matters.";
+      renderHairstyles();
+      renderFrames();
+    }
+
+    function renderHairstyles() {
+      const container = $("hairResults");
+      container.replaceChildren();
+
+      if (!currentGuide) return;
+
+      const options = asArray(currentGuide.hairstyles ?? currentGuide.hairStyles);
+      const length = $("hairLength").value;
+      const texture = $("hairTexture").value;
+      const maintenance = $("maintenance").value;
+      const rank = { low: 1, medium: 2, high: 3 };
+
+      const matches = options.filter(item => {
+        const lengths = asArray(item.lengths).map(x => String(x).toLowerCase());
+        const textures = asArray(item.textures).map(x => String(x).toLowerCase());
+        const level = String(item.maintenanceLevel ?? item.maintenance_level ?? "").toLowerCase();
+
+        return (length === "any" || !lengths.length || lengths.includes(length)) &&
+          (texture === "any" || !textures.length || textures.includes(texture)) &&
+          (maintenance === "any" || !rank[level] || rank[level] <= rank[maintenance]);
+      });
+
+      if (!matches.length) {
+        const p = document.createElement("p");
+        p.className = "subtext";
+        p.textContent = options.length
+          ? "No exact match. Try another filter."
+          : "No hairstyle options were returned by the guide service.";
+        container.appendChild(p);
+      }
+
+      for (const item of matches) {
+        const card = document.createElement("article");
+        card.className = "recommendation";
+        const heading = document.createElement("h5");
+        heading.textContent = item.name || "Hairstyle option";
+        const description = document.createElement("p");
+        description.textContent = item.explanation || item.description || "";
+        const tags = document.createElement("div");
+        tags.className = "tag";
+        tags.textContent = [
+          ...asArray(item.lengths),
+          ...asArray(item.textures),
+          item.maintenanceLevel || item.maintenance_level
+            ? `${pretty(item.maintenanceLevel ?? item.maintenance_level)} maintenance` : ""
+        ].filter(Boolean).map(pretty).join(" · ");
+
+        card.append(heading, description, tags);
+        container.appendChild(card);
+      }
+
+      $("hairMessage").textContent =
+        `Showing ${matches.length} of ${options.length} hairstyle options.`;
+    }
+
+    function renderFrames() {
+      const container = $("frameResults");
+      container.replaceChildren();
+
+      const frames = currentGuide
+        ? asArray(currentGuide.glasses ?? currentGuide.frames ?? currentGuide.eyewear)
+        : [];
+
+      if (!frames.length) {
+        const p = document.createElement("p");
+        p.className = "subtext";
+        p.textContent = "No glasses recommendations were returned for this guide yet.";
+        container.appendChild(p);
+        return;
+      }
+
+      for (const item of frames) {
+        const card = document.createElement("article");
+        card.className = "recommendation";
+        const heading = document.createElement("h5");
+        heading.textContent = item.name || "Frame option";
+        const description = document.createElement("p");
+        description.textContent = item.explanation || item.description || "";
+        card.append(heading, description);
+        container.appendChild(card);
+      }
+    }
+
+    ["hairLength", "hairTexture", "maintenance"].forEach(id => {
+      $(id).addEventListener("change", renderHairstyles);
+    });
+
+    buildGuideCards();
+</script>
+</body>
+</html>

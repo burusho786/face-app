@@ -1,0 +1,25 @@
+  spring:
+    application:
+      name: beauty-face-guide-gateway
+
+    servlet:
+      multipart:
+        enabled: true
+        max-file-size: 10MB
+        # Slightly larger than the file limit for multipart overhead.
+        max-request-size: 11MB
+
+  server:
+    port: 8080
+    shutdown: graceful
+
+    error:
+      include-message: never
+      include-stacktrace: never
+      include-binding-errors: never
+
+  face-service:
+    base-url: http://127.0.0.1:8001
+    service-token: "lp1Va1lByiHUz1fYERkL7tftU7OFvgI4Dr6ICLkTUuE="
+    connect-timeout: 3s
+    read-timeout: 60s
